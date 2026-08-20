@@ -749,12 +749,19 @@
         font-size: 14px;
         max-width: 470px;
       }
-      .program-meta {
+      .program-footer {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        align-items: flex-end;
+        gap: 12px;
         margin-top: auto;
         padding-top: 24px;
+      }
+      .program-meta {
+        min-width: 0;
+        display: flex;
+        flex: 1 1 auto;
+        flex-wrap: wrap;
+        gap: 8px;
         color: var(--muted);
         font:
           500 10px "DM Mono",
@@ -766,11 +773,11 @@
         padding: 7px 9px;
         border: 1px solid currentColor;
         border-radius: 999px;
+        white-space: nowrap;
       }
       .program-link {
-        position: absolute;
-        right: 22px;
-        bottom: 22px;
+        position: static;
+        flex: 0 0 42px;
         width: 42px;
         height: 42px;
         display: grid;
@@ -966,16 +973,21 @@
         box-shadow: 12px 12px 0 var(--navy);
         background: var(--navy);
         min-height: 620px;
+        display: flex;
+        align-items: stretch;
       }
       .map-art {
         position: absolute;
         inset: 0;
+        background: #071529;
       }
       .map-art > svg {
         width: 100%;
         height: 100%;
+        display: block;
         object-fit: cover;
-        transform: scale(1.02);
+        transform: scale(1.06) translateY(1.5%);
+        transform-origin: center bottom;
       }
 
       .values-grid {
@@ -1792,11 +1804,14 @@
                 confidence through one-on-one instruction shaped around your
                 goals.
               </p>
-              <div class="program-meta">
-                <span>30 min · $35</span><span>45 min · $50</span
-                ><span>60 min · $65</span>
+              <div class="program-footer">
+                <div class="program-meta">
+                  <span>30 min · $35</span><span>45 min · $50</span
+                  ><span>60 min · $65</span>
+                </div>
+
+                <span class="program-link" aria-hidden="true">↗</span>
               </div>
-              <span class="program-link" aria-hidden="true">↗</span>
             </a>
 
             <a
@@ -1811,11 +1826,14 @@
                 Bring together players of similar ability for an educational,
                 competitive, and genuinely fun environment.
               </p>
-              <div class="program-meta">
-                <span>3–6 players</span><span>90 min</span
-                ><span>$30 / player</span>
+              <div class="program-footer">
+                <div class="program-meta">
+                  <span>3–6 players</span><span>90 min</span
+                  ><span>$30 / player</span>
+                </div>
+
+                <span class="program-link" aria-hidden="true">↗</span>
               </div>
-              <span class="program-link" aria-hidden="true">↗</span>
             </a>
 
             <a
@@ -1831,10 +1849,13 @@
                 energy, and help young children develop cognitive and movement
                 skills alongside a parent or guardian.
               </p>
-              <div class="program-meta">
-                <span>Ages 2–3</span><span>30 min</span><span>$35</span>
+              <div class="program-footer">
+                <div class="program-meta">
+                  <span>Ages 2–3</span><span>30 min</span><span>$35</span>
+                </div>
+
+                <span class="program-link" aria-hidden="true">↗</span>
               </div>
-              <span class="program-link" aria-hidden="true">↗</span>
             </a>
 
             <a
@@ -1850,11 +1871,14 @@
                 fitness through tennis-inspired drills, circuits, and bodyweight
                 movement.
               </p>
-              <div class="program-meta">
-                <span>60 min</span><span>Private · $65</span
-                ><span>Group · $35 / person</span>
+              <div class="program-footer">
+                <div class="program-meta">
+                  <span>60 min</span><span>Private · $65</span
+                  ><span>Group · $35 / person</span>
+                </div>
+
+                <span class="program-link" aria-hidden="true">↗</span>
               </div>
-              <span class="program-link" aria-hidden="true">↗</span>
             </a>
 
             <a
@@ -1870,10 +1894,14 @@
                 strength, repetition, reflection, and journaling create a
                 restorative hour designed for moms.
               </p>
-              <div class="program-meta">
-                <span>60 min</span><span>$50</span><span>Journal included</span>
+              <div class="program-footer">
+                <div class="program-meta">
+                  <span>60 min</span><span>$50</span
+                  ><span>Journal included</span>
+                </div>
+
+                <span class="program-link" aria-hidden="true">↗</span>
               </div>
-              <span class="program-link" aria-hidden="true">↗</span>
             </a>
           </div>
         </div>
