@@ -376,7 +376,7 @@
         max-width: 760px;
         margin: 24px 0 27px;
         font-size: clamp(58px, 7.6vw, 108px);
-        line-height: 0.89;
+        line-height: 0.92;
         letter-spacing: -0.071em;
         font-weight: 700;
       }
@@ -385,6 +385,11 @@
         font-style: italic;
         font-weight: 400;
         letter-spacing: -0.035em;
+      }
+      .hero-script {
+        display: block;
+        margin-top: 0.07em;
+        line-height: 0.9;
       }
       .hero-copy > p {
         max-width: 650px;
@@ -999,32 +1004,6 @@
         height: 100%;
         object-fit: cover;
         transform: scale(1.02);
-      }
-      .map-pin {
-        position: absolute;
-        left: 49%;
-        top: 47%;
-        transform: translate(-50%, -50%);
-        z-index: 4;
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        padding: 10px 13px;
-        background: var(--white);
-        border: 1px solid var(--navy);
-        border-radius: 999px;
-        box-shadow: 6px 6px 0 var(--navy);
-        font-size: 11px;
-        font-weight: 800;
-        white-space: nowrap;
-      }
-      .map-pin::before {
-        content: "";
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: var(--tennis);
-        border: 1px solid var(--navy);
       }
 
       .values-grid {
@@ -1684,7 +1663,7 @@
           <div class="hero-copy reveal">
             <div class="eyebrow">Tennis for self-advancement</div>
             <h1>
-              Build your game.<br /><span class="serif"
+              Build your game.<br /><span class="serif hero-script"
                 >Grow your confidence.</span
               >
             </h1>
@@ -2168,7 +2147,6 @@
                 />
               </svg>
             </div>
-            <div class="map-pin">Roth Tennis · Grand Rapids</div>
           </div>
         </div>
       </section>
