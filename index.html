@@ -645,6 +645,66 @@
         color: var(--muted);
         font-size: 17px;
       }
+
+      .pong-shell {
+        margin-top: 34px;
+        max-width: 610px;
+        border: 1px solid var(--navy);
+        border-radius: 22px;
+        overflow: hidden;
+        background: var(--navy);
+        box-shadow: 10px 10px 0 rgba(17, 63, 131, 0.12);
+      }
+      .pong-topbar {
+        min-height: 38px;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        color: var(--paper);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        font:
+          500 9px/1.2 "DM Mono",
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+      }
+      .pong-topbar span:last-child {
+        color: var(--tennis);
+      }
+      .pong-canvas-wrap {
+        position: relative;
+        background: #071529;
+      }
+      #pongCanvas {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 800 / 420;
+        display: block;
+        cursor: ns-resize;
+        touch-action: none;
+        outline: none;
+        background: #071529;
+      }
+      #pongCanvas:focus-visible {
+        box-shadow: inset 0 0 0 3px var(--tennis);
+      }
+      .pong-help {
+        margin: 0;
+        padding: 11px 14px 13px;
+        color: #b9c5d2;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        font:
+          500 9px/1.45 "DM Mono",
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.055em;
+      }
+      .pong-help strong {
+        color: var(--tennis);
+        font-weight: 500;
+      }
       .mini-values {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -1733,6 +1793,29 @@
                 >Growth is the goal.</span
               >
             </div>
+
+            <div
+              class="pong-shell"
+              aria-label="Interactive tennis-inspired paddle game"
+            >
+              <div class="pong-topbar">
+                <span>Rally Lab · You vs. Coach Bot</span
+                ><span>First to 5</span>
+              </div>
+              <div class="pong-canvas-wrap">
+                <canvas
+                  id="pongCanvas"
+                  width="800"
+                  height="420"
+                  tabindex="0"
+                  aria-label="Playable paddle game. Move your paddle with the mouse, touch, W and S keys, or the up and down arrow keys."
+                ></canvas>
+              </div>
+              <p class="pong-help">
+                <strong>Click or tap to serve.</strong> Move with mouse / finger
+                · W + S · ↑ + ↓
+              </p>
+            </div>
           </div>
           <div class="manifesto-copy reveal">
             <p>
@@ -2442,6 +2525,277 @@
       document
         .querySelectorAll(".reveal")
         .forEach((el) => observer.observe(el));
+
+      // --- Rally Lab: lightweight, dependency-free Pong-style game ---
+      (() => {
+        const canvas = document.getElementById("pongCanvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = 800,
+          H = 420;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const paddle = { w: 14, h: 88 };
+        const player = {
+          x: 34,
+          y: H / 2 - paddle.h / 2,
+          score: 0,
+          targetY: H / 2,
+        };
+        const bot = { x: W - 34 - paddle.w, y: H / 2 - paddle.h / 2, score: 0 };
+        const ball = { x: W / 2, y: H / 2, r: 9, vx: 0, vy: 0 };
+        const keys = new Set();
+        let running = false;
+        let gameOver = false;
+        let winner = "";
+        let last = performance.now();
+        let inView = true;
+        let raf = null;
+        let dragging = false;
+
+        function clamp(v, min, max) {
+          return Math.max(min, Math.min(max, v));
+        }
+
+        function resetBall(direction = Math.random() < 0.5 ? -1 : 1) {
+          ball.x = W / 2;
+          ball.y = H / 2 + (Math.random() - 0.5) * 90;
+          const speed = 355;
+          const angle = Math.random() * 0.7 - 0.35;
+          ball.vx = Math.cos(angle) * speed * direction;
+          ball.vy = Math.sin(angle) * speed;
+          running = false;
+        }
+
+        function newGame() {
+          player.score = 0;
+          bot.score = 0;
+          gameOver = false;
+          winner = "";
+          player.y = bot.y = H / 2 - paddle.h / 2;
+          player.targetY = H / 2;
+          resetBall(1);
+        }
+
+        function serve() {
+          canvas.focus({ preventScroll: true });
+          if (gameOver) newGame();
+          if (!running) running = true;
+        }
+
+        function pointTo(side) {
+          if (side === "player") player.score++;
+          else bot.score++;
+          if (player.score >= 5 || bot.score >= 5) {
+            gameOver = true;
+            running = false;
+            winner = player.score > bot.score ? "YOU WIN" : "COACH BOT WINS";
+            ball.vx = ball.vy = 0;
+          } else {
+            resetBall(side === "player" ? -1 : 1);
+          }
+        }
+
+        function hitPaddle(p, isPlayer) {
+          const movingToward = isPlayer ? ball.vx < 0 : ball.vx > 0;
+          if (!movingToward) return false;
+          const px1 = p.x,
+            px2 = p.x + paddle.w;
+          const py1 = p.y,
+            py2 = p.y + paddle.h;
+          const bx1 = ball.x - ball.r,
+            bx2 = ball.x + ball.r;
+          const by1 = ball.y - ball.r,
+            by2 = ball.y + ball.r;
+          if (bx2 >= px1 && bx1 <= px2 && by2 >= py1 && by1 <= py2) {
+            const relative = clamp(
+              (ball.y - (p.y + paddle.h / 2)) / (paddle.h / 2),
+              -1,
+              1,
+            );
+            const speed = Math.min(
+              620,
+              Math.hypot(ball.vx, ball.vy) * 1.045 + 9,
+            );
+            const angle = relative * 0.92;
+            ball.vx = Math.cos(angle) * speed * (isPlayer ? 1 : -1);
+            ball.vy = Math.sin(angle) * speed;
+            ball.x = isPlayer ? px2 + ball.r + 1 : px1 - ball.r - 1;
+            return true;
+          }
+          return false;
+        }
+
+        function update(dt) {
+          const keySpeed = 470;
+          if (keys.has("ArrowUp") || keys.has("w") || keys.has("W"))
+            player.y -= keySpeed * dt;
+          if (keys.has("ArrowDown") || keys.has("s") || keys.has("S"))
+            player.y += keySpeed * dt;
+
+          if (
+            !["ArrowUp", "ArrowDown", "w", "W", "s", "S"].some((k) =>
+              keys.has(k),
+            )
+          ) {
+            const desired = player.targetY - paddle.h / 2;
+            player.y += (desired - player.y) * Math.min(1, dt * 13);
+          }
+          player.y = clamp(player.y, 14, H - paddle.h - 14);
+
+          if (!running || gameOver) return;
+
+          // Bot deliberately has limited acceleration/reaction so a visitor can beat it.
+          const predictedY = ball.vx > 0 ? ball.y + ball.vy * 0.13 : H / 2;
+          const botTarget = predictedY - paddle.h / 2;
+          const maxBotStep = 305 * dt;
+          bot.y += clamp(botTarget - bot.y, -maxBotStep, maxBotStep);
+          bot.y = clamp(bot.y, 14, H - paddle.h - 14);
+
+          ball.x += ball.vx * dt;
+          ball.y += ball.vy * dt;
+          if (ball.y - ball.r <= 12) {
+            ball.y = 12 + ball.r;
+            ball.vy = Math.abs(ball.vy);
+          }
+          if (ball.y + ball.r >= H - 12) {
+            ball.y = H - 12 - ball.r;
+            ball.vy = -Math.abs(ball.vy);
+          }
+
+          hitPaddle(player, true);
+          hitPaddle(bot, false);
+
+          if (ball.x < -28) pointTo("bot");
+          if (ball.x > W + 28) pointTo("player");
+        }
+
+        function drawNet() {
+          ctx.save();
+          ctx.globalAlpha = 0.36;
+          ctx.fillStyle = "#f4f5f7";
+          for (let y = 18; y < H - 18; y += 30)
+            ctx.fillRect(W / 2 - 2, y, 4, 16);
+          ctx.restore();
+        }
+
+        function draw() {
+          ctx.clearRect(0, 0, W, H);
+          ctx.fillStyle = "#071529";
+          ctx.fillRect(0, 0, W, H);
+
+          // Court-style hairline border.
+          ctx.strokeStyle = "rgba(244,245,247,.30)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(12, 12, W - 24, H - 24);
+          drawNet();
+
+          ctx.fillStyle = "#f4f5f7";
+          ctx.fillRect(player.x, player.y, paddle.w, paddle.h);
+          ctx.fillRect(bot.x, bot.y, paddle.w, paddle.h);
+
+          ctx.fillStyle = "#f2d54d";
+          ctx.beginPath();
+          ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.font = '700 42px "DM Mono", monospace';
+          ctx.textAlign = "center";
+          ctx.fillStyle = "rgba(244,245,247,.82)";
+          ctx.fillText(player.score, W / 2 - 58, 62);
+          ctx.fillText(bot.score, W / 2 + 58, 62);
+
+          ctx.font = '500 10px "DM Mono", monospace';
+          ctx.letterSpacing = "1px";
+          ctx.fillStyle = "rgba(244,245,247,.54)";
+          ctx.fillText("YOU", W / 2 - 58, 82);
+          ctx.fillText("BOT", W / 2 + 58, 82);
+
+          if (!running) {
+            ctx.fillStyle = "rgba(7,21,41,.68)";
+            ctx.fillRect(0, 0, W, H);
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#f4f5f7";
+            ctx.font = '700 22px "Sora", sans-serif';
+            const title = gameOver
+              ? winner
+              : player.score || bot.score
+                ? "READY FOR THE NEXT SERVE?"
+                : "READY TO RALLY?";
+            ctx.fillText(title, W / 2, H / 2 - 8);
+            ctx.fillStyle = "#f2d54d";
+            ctx.font = '500 11px "DM Mono", monospace';
+            ctx.fillText(
+              gameOver ? "CLICK / TAP TO PLAY AGAIN" : "CLICK / TAP TO SERVE",
+              W / 2,
+              H / 2 + 24,
+            );
+          }
+        }
+
+        function frame(now) {
+          const dt = Math.min(0.025, (now - last) / 1000 || 0);
+          last = now;
+          if (inView && !document.hidden) update(dt);
+          draw();
+          raf = requestAnimationFrame(frame);
+        }
+
+        function pointerMove(e) {
+          const rect = canvas.getBoundingClientRect();
+          const y = ((e.clientY - rect.top) / rect.height) * H;
+          player.targetY = clamp(y, paddle.h / 2 + 14, H - paddle.h / 2 - 14);
+        }
+
+        canvas.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          dragging = true;
+          pointerMove(e);
+          canvas.setPointerCapture?.(e.pointerId);
+          serve();
+        });
+        canvas.addEventListener("pointermove", (e) => {
+          if (e.pointerType === "mouse" || dragging) pointerMove(e);
+        });
+        canvas.addEventListener("pointerup", () => {
+          dragging = false;
+        });
+        canvas.addEventListener("pointercancel", () => {
+          dragging = false;
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (document.activeElement !== canvas) return;
+          if (
+            ["ArrowUp", "ArrowDown", "w", "W", "s", "S", " ", "Enter"].includes(
+              e.key,
+            )
+          )
+            e.preventDefault();
+          if (e.key === " " || e.key === "Enter") serve();
+          keys.add(e.key);
+        });
+        document.addEventListener("keyup", (e) => keys.delete(e.key));
+
+        const gameObserver = new IntersectionObserver(
+          (entries) => {
+            inView = entries[0]?.isIntersecting ?? true;
+            last = performance.now();
+          },
+          { threshold: 0.05 },
+        );
+        gameObserver.observe(canvas);
+
+        document.addEventListener("visibilitychange", () => {
+          last = performance.now();
+        });
+        newGame();
+        draw();
+        raf = requestAnimationFrame(frame);
+      })();
 
       document.getElementById("year").textContent = new Date().getFullYear();
     </script>
